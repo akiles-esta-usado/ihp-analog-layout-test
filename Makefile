@@ -18,8 +18,6 @@ klayout-script:
 	$(KLAYOUT_CLI) -r $(TOP)
 
 
-
-
 xschem:
 	$(XSCHEM) $(TOP)
 
