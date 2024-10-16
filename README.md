@@ -26,4 +26,4 @@ make xschem
 
 ## Troubleshoot
 
-- **Modules should not contain '-', only '_'**
+- **Do not use '-' on names of cells, modules, layouts, etc. Only use '_'**
