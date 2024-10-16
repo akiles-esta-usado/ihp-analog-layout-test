@@ -1,0 +1,5 @@
+* Extracted by KLayout with SG13G2 LVS runset on : 16/10/2024 16:00
+
+.SUBCKT pmos_gr S G D 
+M1 D G S S sg13_hv_pmos L=0.22u W=5u M=54
+.ENDS pmos_gr
