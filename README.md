@@ -23,3 +23,7 @@ make klayout
 
 make xschem
 ~~~
+
+## Troubleshoot
+
+- **Modules should not contain '-', only '_'**
