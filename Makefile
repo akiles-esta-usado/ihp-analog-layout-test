@@ -10,8 +10,13 @@ XSCHEM_ARGS     = --rcfile $(PDK_ROOT)/$(PDK)/libs.tech/xschem/xschemrc
 XSCHEM          = $(XSCHEM_EXE) $(XSCHEM_ARGS)
 
 
+TOP_GDS         ?= $(realpath $(TOP)/$(TOP).gds)
+TOP_SCH         ?= $(realpath $(TOP)/$(TOP).sch)
+TOP_SPICE       ?= $(realpath $(TOP)/$(TOP).spice)
+
+
 klayout:
-	$(KLAYOUT) $(TOP)
+	$(KLAYOUT) $(TOP_GDS)
 
 
 klayout-script:
@@ -19,7 +24,7 @@ klayout-script:
 
 
 xschem:
-	$(XSCHEM) $(TOP)
+	$(XSCHEM) $(TOP_SCH)
 
 
 # --help -h                 Displays this help message.
@@ -42,8 +47,8 @@ xschem:
 
 klayout-lvs:
 	python $(PDK_ROOT)/$(PDK)/libs.tech/klayout/tech/lvs/run_lvs.py \
-		--layout=$(TOP)/$(TOP).gds \
-		--netlist=$(TOP)/$(TOP).spice \
+		--layout=$(TOP_GDS) \
+		--netlist=$(TOP_SPICE) \
 		--topcell=$(TOP) \
 		--run_mode=deep \
 		--run_dir=./tmp/ \
@@ -63,7 +68,7 @@ klayout-lvs:
 
 klayout-drc:
 	$(KLAYOUT_CLI) -r $(PDK_ROOT)/$(PDK)/libs.tech/klayout/tech/drc/sg13g2_maximal.lydrc \
-		-rd in_gds=$(TOP)/$(TOP).gds \
+		-rd in_gds=$(TOP_GDS) \
 		-rd cell=$(TOP) \
 		-rd log_file=./tmp/$(TOP)_drc.log \
 		-rd report_file=./tmp/$(TOP).lyrdb \
