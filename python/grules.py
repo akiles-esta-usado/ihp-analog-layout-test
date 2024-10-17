@@ -20,6 +20,7 @@ def add_layer_rule(grules: dict, layer1: str, rules: dict[str, dict]):
         "min_area",
         "capmettop",
         "capmetbottom",
+        "overhang",
     }
 
     for layer2, rule_dict in rules.items():
@@ -145,14 +146,35 @@ add_layer_rule(
 )
 
 
-# p+s/d
+# p+s/d (5.10) Region with P+ implants (Drain, Source, Resistos, Ties)
+# R pSD.a    0.31   Min. pSD width
+# R pSD.b    0.31   Min. pSD space or notch (Note 1)
+# R pSD.k    0.25   Min. pSD area (µm²)
+
+# pSD.c    0.18   Min. pSD enclosure of P+Activ in NWell
+# pSD.c1   0.03   Min. pSD enclosure of P+Activ in PWell
+# pSD.i    0.30   Min. pSD enclosure of PFET gate not inside ThickGateOx
+# pSD.i1   0.40   Min. pSD enclosure of PFET gate inside ThickGateOx
+# pSD.n    0.18   Min. pSD enclosure of p-type poly resistors
+
+# pSD.d    0.18   Min. pSD space to unrelated N+Activ in PWell
+# pSD.d1   0.03   Min. pSD space to N+Activ in NWell
+# pSD.j    0.30   Min. pSD space to NFET gate not inside ThickGateOx
+# pSD.j1   0.40   Min. pSD space to NFET gate inside ThickGateOx
+# pSD.m    0.18   Min. pSD space to n-type poly resistors
+
+# pSD.e    0.30   Min. pSD overlap of Activ at one position when forming abutted substrate tie (Note 2)
+# pSD.f    0.30   Min. Activ extension over pSD at one position when forming abutted NWell tie (Note 2)
+# pSD.g    0.09   Min. N+Activ or P+Activ area (µm²) when forming abutted tie (Note 2)
+# pSD.l    0.25   Min. pSD enclosed area (µm²)
 add_layer_rule(
     grulesobj,
     "p+s/d",
     {
         "p+s/d": {
-            "min_width": 0.4,  # TODO
-            "min_separation": 0.4,  # TODO
+            "min_width": 0.31,  # pSD.a
+            "min_separation": 0.31,  # pSD.b
+            "min_area": 0.25,  # pSD.k
         },
         "n+s/d": {},
         "active_diff": {
@@ -226,7 +248,7 @@ add_layer_rule(
             # "max_separation": 20.0,  # TODO
         },
         "poly": {
-            # "overhang": 0.24,  # TODO
+            "overhang": 0.23,  # Act.c
             "min_separation": 0.1,  # TODO
         },
         "mcon": {
@@ -432,7 +454,7 @@ add_layer_rule(
         "met2": {
             "min_width": 0.20,  # Mn.a
             "min_separation": 0.21,  # Mn.a
-            "min_area": 0.144,  # Mn.d
+            "min_area": 0.1444,  # Mn.d, added extra 0.0004 to avoid sqrt errors
         },
         "via2": {
             "min_enclosure": 0.05  # Vn.c, Vn.c1 always handle endcap

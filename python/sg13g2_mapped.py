@@ -6,6 +6,8 @@ from grules import grulesobj
 from glayout.flow.pdk.mappedpdk import MappedPDK, SetupPDKFiles
 from pathlib import Path
 
+from os import environ
+
 
 LAYER = {
     # BEOL
@@ -165,8 +167,8 @@ openfasoc_dir = (
     Path(__file__).resolve().parent.parent.parent.parent.parent.parent.parent
 )
 
-sg13g2_drc_file = Path(__file__).resolve().parent / "sg13g2mcu_drc.lydrc"
-pdk_root = Path("/usr/bin/miniconda3/share/pdk/")
+pdk_dir = Path(environ["PDK_ROOT"]) / "ihp-sg13g2"
+
 lvs_schematic_ref_file = (
     openfasoc_dir
     / "common"
@@ -175,19 +177,17 @@ lvs_schematic_ref_file = (
     / "cdl"
     / "sg13g2mcu_osu_sc_9T.spice"
 )
-magic_drc_file = pdk_root / "sg13g2mcuC" / "libs.tech" / "magic" / "sg13g2mcuC.magicrc"
-lvs_setup_tcl_file = (
-    pdk_root / "sg13g2mcuC" / "libs.tech" / "netgen" / "sg13g2mcuC_setup.tcl"
-)
 temp_dir = None
 
 
+# TODO: This code should be refactored
 pdk_files = SetupPDKFiles(
-    pdk_root=pdk_root,
-    klayout_drc_file=sg13g2_drc_file,
-    lvs_schematic_ref_file=lvs_schematic_ref_file,
-    lvs_setup_tcl_file=lvs_setup_tcl_file,
-    magic_drc_file=magic_drc_file,
+    lvs_setup_tcl_file="",
+    magic_drc_file="",
+    pdk_root=environ["PDK_ROOT"],
+    klayout_drc_file=pdk_dir / "libs.tech/klayout/tech/lvs/sg13g2_full.lylvs",
+    lvs_schematic_ref_file=pdk_dir
+    / "libs.ref/sg13g2_stdcell/cdl/sg13g2_stdcell.cdl",
     temp_dir=temp_dir,
     pdk="sg13g2",
 ).return_dict_of_files()
