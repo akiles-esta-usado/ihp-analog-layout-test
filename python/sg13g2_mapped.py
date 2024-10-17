@@ -155,7 +155,7 @@ sg13g2_glayer_mapping = {
     "nwell": "NWell.drawing",
     "pwell": "PWell.drawing",
     "dnwell": "TEXT.drawing",
-    "capmet": "TEXT.drawing",
+    "capmet": "MIM.drawing",
 }
 
 # note for DRC, there is mim_option 'A'. This is the one configured for use
@@ -175,9 +175,7 @@ lvs_schematic_ref_file = (
     / "cdl"
     / "sg13g2mcu_osu_sc_9T.spice"
 )
-magic_drc_file = (
-    pdk_root / "sg13g2mcuC" / "libs.tech" / "magic" / "sg13g2mcuC.magicrc"
-)
+magic_drc_file = pdk_root / "sg13g2mcuC" / "libs.tech" / "magic" / "sg13g2mcuC.magicrc"
 lvs_setup_tcl_file = (
     pdk_root / "sg13g2mcuC" / "libs.tech" / "netgen" / "sg13g2mcuC_setup.tcl"
 )
@@ -205,4 +203,5 @@ sg13g2_mapped_pdk = MappedPDK(
 
 # configure the grid size and other settings
 sg13g2_mapped_pdk.gds_write_settings.precision = 5 * 10**-9
+sg13g2_mapped_pdk.gds_write_settings.unit = 5 * 10**-9
 sg13g2_mapped_pdk.cell_decorator_settings.cache = False

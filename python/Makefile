@@ -1,7 +1,7 @@
 PDK=ihp-sg13g2
 
 KLAYOUT_EXE		= $(shell command -v klayout)
-KLAYOUT_ARGS	= -c misc/klayoutrc -t -e
+KLAYOUT_ARGS	= -c ../misc/klayoutrc -t -e
 KLAYOUT			= $(KLAYOUT_EXE) $(KLAYOUT_ARGS)
 KLAYOUT_CLI     = $(KLAYOUT) -b -zz
 
@@ -72,11 +72,11 @@ klayout-drc:
 		-rd cell=$(TOP) \
 		-rd log_file=./tmp/$(TOP)_drc.log \
 		-rd report_file=./tmp/$(TOP).lyrdb \
-		-rd offGrid=false \
+		-rd offGrid=true \
 		-rd density=false \
-		-rd filler=false \
-		-rd noRecommendedRules=false \
-		-rd sanityRules=false \
+		-rd filler=true \
+		-rd noRecommendedRules=true \
+		-rd sanityRules=true \
 		-rd checkDensityRules=true
 	
 	$(KLAYOUT) $(TOP)/$(TOP).gds -m ./tmp/$(TOP).lyrdb
@@ -97,3 +97,7 @@ klayout-drc-full:
 		-rd checkDensityRules=true
 	
 	$(KLAYOUT) $(TOP)/$(TOP).gds -m ./tmp/$(TOP).lyrdb
+
+
+glayout:
+	python $(TOP).py && make TOP=$(TOP) klayout-drc
