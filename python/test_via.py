@@ -10,11 +10,6 @@ from pathlib import Path
 from math import sqrt
 
 
-# def __create_rectangle(pdk: MappedPDK, glayer: str, width=None, length=None):
-#     layer = pdk.get_glayer(glayer)
-#     box_size = via_size + 2 * PDK.get_grule("via1", "met1")["min_enclosure"]
-
-
 def get_metalization_via_width(
     pdk: MappedPDK, glayer: str, bottom_via: str = None, top_via: str = None
 ):
@@ -108,30 +103,21 @@ def get_via_width(pdk: MappedPDK):
 
 
 def via(pdk: MappedPDK, bottom_glayer, via_glayer, top_glayer):
-    width = get_via_width(pdk)
+    widths = get_via_width(pdk)
 
     top_level = Component(name="via")
 
-    top_level << rectangle(
-        size=(width[bottom_glayer], width[bottom_glayer]),
-        layer=pdk.get_glayer(bottom_glayer),
-        centered=True,
-    )
-    top_level << rectangle(
-        size=(width[via_glayer], width[via_glayer]),
-        layer=pdk.get_glayer(via_glayer),
-        centered=True,
-    )
-    top_level << rectangle(
-        size=(width[top_glayer], width[top_glayer]),
-        layer=pdk.get_glayer(top_glayer),
-        centered=True,
-    )
+    for glayer in {bottom_glayer, via_glayer, top_glayer}:
+        top_level << rectangle(
+            size=(widths[glayer], widths[glayer]),
+            layer=pdk.get_glayer(glayer),
+            centered=True,
+        )
 
     return top_level
 
 
-module = "via"
+module = "test_via"
 module_path = Path(module)
 module_gds = module_path / f"{module}.gds"
 

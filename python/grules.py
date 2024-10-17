@@ -24,19 +24,14 @@ def add_layer_rule(grules: dict, layer1: str, rules: dict[str, dict]):
     }
 
     for layer2, rule_dict in rules.items():
-        if (
-            grules[layer2][layer1] is not None
-            or grules[layer1][layer2] is not None
-        ):
+        if grules[layer2][layer1] is not None or grules[layer1][layer2] is not None:
             raise RuntimeError(f"Rule {layer1}/{layer2} is already registered")
 
         grules[layer1][layer2] = rule_dict
 
         for rule_name in rule_dict.keys():
             if rule_name not in valid_rules:
-                raise RuntimeError(
-                    f"Rule {rule_name} from {layer1}/{layer2} is not valid"
-                )
+                raise RuntimeError(f"Rule {rule_name} from {layer1}/{layer2} is not valid")
 
 
 # DNWell
@@ -242,6 +237,7 @@ add_layer_rule(
         "active_diff": {
             "min_width": 0.22,  # TODO
             "min_separation": 0.28,  # TODO
+            "min_area": 0.1225,  # Act.d adjusted to a precise root
         },
         "active_tap": {
             "min_separation": 0.28,  # TODO
@@ -276,6 +272,7 @@ add_layer_rule(
         "active_tap": {
             "min_width": 0.22,  # TODO
             "min_separation": 0.28,  # TODO
+            "min_area": 0.1225,  # Act.d adjusted to a precise root
         },
         "poly": {
             "min_separation": 0.1  # TODO
