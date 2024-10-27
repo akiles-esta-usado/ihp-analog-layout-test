@@ -1,8 +1,7 @@
 from pydantic import validate_arguments
 
-import shapely
-from shapely import Polygon
-from shapely import affinity
+import shapely as sp
+from shapely import Polygon, affinity
 
 import gdstk
 
@@ -129,6 +128,18 @@ def contains_polygons(c: Component, layer: str = None):
         return len(c.get_polygons()) > 0
 
 
+def count_polygons(c: Component, layer: str):
+    multipolygon = c.get_polygons(by_spec=LAYER[layer], as_shapely_merged=True)
+    return len(sp.get_parts(multipolygon))
+
+
+def get_corner(c: ComponentReference, corner: str):
+    (xmin, ymin), (xmax, ymax) = c.get_bounding_box()
+    x = xmin if "l" in corner else xmax
+    y = ymin if "b" in corner else ymax
+    return x, y
+
+
 def drc_check(c: Component) -> int:
     if len(c.get_polygons()) == 0:
         raise ValueError("Component has no polygons in it")
@@ -183,10 +194,10 @@ def lvs_check(c: Component, netlist: str):
 
     for line in output.stdout.splitlines():
         if "ERROR : Netlists" in line:
-            return False, "ERROR : Netlists"
+            return False
 
         if "INFO : Congratulations!" in line:
-            return True, "INFO : Congratulations!"
+            return True
 
 
 ## Primitives
@@ -230,7 +241,7 @@ def create_bulk(pdk, fet_type: str, length, height, metal_top="met1"):
 
 def generate_thick_gate_oxide(source: Component):
     c = Component()
-    merged = shapely.intersection_all(
+    merged = sp.intersection_all(
         [
             source.get_polygons(by_spec=LAYER["Activ.drawing"], as_shapely_merged=True),
             source.get_polygons(by_spec=LAYER["GatPoly.drawing"], as_shapely_merged=True),
@@ -289,7 +300,7 @@ def insert_tapring(pdk: MappedPDK, c: Component, fet_type: str):
 #######
 
 
-def sg_nmos(pdk: MappedPDK, width, length, nf, high_voltage: bool):
+def sg_nmos(pdk: MappedPDK, width, length, nf, high_voltage: bool, bulk: bool = True):
     c = Component()
 
     nmos_inst = nmos(
@@ -315,19 +326,20 @@ def sg_nmos(pdk: MappedPDK, width, length, nf, high_voltage: bool):
 
     nmos_ref = c << nmos_inst
 
-    bulk_ref: ComponentReference = c << create_bulk(
-        pdk, "nmos", length=evaluate_bbox(nmos_inst)[0], height=1.3
-    )
+    if bulk:
+        bulk_ref: ComponentReference = c << create_bulk(
+            pdk, "nmos", length=evaluate_bbox(nmos_inst)[0], height=1.3
+        )
 
-    # bulk_ref.movex(
-    #     origin=bulk_ref.get_bounding_box()[0], destination=nmos_ref.get_bounding_box()[0]
-    # )
+        # bulk_ref.movex(
+        #     origin=bulk_ref.get_bounding_box()[0], destination=nmos_ref.get_bounding_box()[0]
+        # )
 
-    nmos_height = evaluate_bbox(nmos_ref)[1]
-    bulk_height = evaluate_bbox(bulk_ref)[1]
+        nmos_height = evaluate_bbox(nmos_ref)[1]
+        bulk_height = evaluate_bbox(bulk_ref)[1]
 
-    # Inmediate connection of source and bulk
-    bulk_ref.movey((nmos_height + bulk_height) / 2 - 0.16)
+        # Inmediate connection of source and bulk
+        bulk_ref.movey((nmos_height + bulk_height) / 2 - 0.16)
 
     if high_voltage:
         nmos_inst << generate_thick_gate_oxide(nmos_inst)
@@ -357,7 +369,9 @@ def sg_nmos_array(pdk: MappedPDK, rows, cols, nmos_params):
     return c
 
 
-def sg_pmos(pdk: MappedPDK, width, length, nf, high_voltage: bool):
+def sg_pmos(
+    pdk: MappedPDK, width, length, nf, high_voltage: bool, bulk: bool = True, **kwargs
+):
     c = Component()
 
     pmos_inst = pmos(
@@ -369,6 +383,7 @@ def sg_pmos(pdk: MappedPDK, width, length, nf, high_voltage: bool):
         dnwell=False,
         with_dummy=False,
         with_substrate_tap=False,
+        **kwargs,
     )
 
     for corners in pmos_inst.get_polygons(by_spec=LAYER["GatPoly.drawing"]):
@@ -380,15 +395,16 @@ def sg_pmos(pdk: MappedPDK, width, length, nf, high_voltage: bool):
 
     pmos_ref = c << pmos_inst
 
-    bulk_ref: ComponentReference = c << create_bulk(
-        pdk, "pmos", length=evaluate_bbox(pmos_inst)[0], height=1.3
-    )
+    if bulk:
+        bulk_ref: ComponentReference = c << create_bulk(
+            pdk, "pmos", length=evaluate_bbox(pmos_inst)[0], height=1.3
+        )
 
-    pmos_height = evaluate_bbox(pmos_ref)[1]
-    bulk_height = evaluate_bbox(bulk_ref)[1]
+        pmos_height = evaluate_bbox(pmos_ref)[1]
+        bulk_height = evaluate_bbox(bulk_ref)[1]
 
-    # Ipmediate connection of fet and bulk
-    bulk_ref.movey((pmos_height + bulk_height) / 2 - 1.1)
+        # Ipmediate connection of fet and bulk
+        bulk_ref.movey((pmos_height + bulk_height) / 2 - 1.1)
 
     c.add_ports(pmos_ref.get_ports_dict())
 
@@ -429,5 +445,51 @@ def sg_pmos_array(pdk: MappedPDK, rows, cols, pmos_hv_params):
         columns=cols,
         spacing=spacing,
     )
+
+    return c
+
+
+def sg_power_pmos(
+    pdk: MappedPDK, width: float, length: float, nf: int, high_voltage: bool
+):
+    c = sg_pmos(
+        pdk,
+        width=width,
+        length=length,
+        nf=nf,
+        high_voltage=high_voltage,
+        bulk=False,
+        # Next are specific to glayout's pmos
+        sd_route_topmet="met4",
+        gate_route_topmet="met3",
+        interfinger_rmult=2,
+        gate_rmult=2,
+        sd_rmult=2,
+    )
+
+    vias: Component = None
+    for corners in c.get_polygons(by_spec=LAYER["Metal2.drawing"]):
+        left, bottom = np.min(corners, axis=0).tolist()
+        right, top = np.max(corners, axis=0).tolist()
+
+        if abs(top - bottom) < length:
+            continue
+
+        if vias is None:
+            vias = via_array(
+                pdk,
+                glayer1="met2",
+                glayer2="met4",
+                size=(right - left, top - bottom),
+                lay_bottom=True,  # Bottom layer connects all vias
+                lay_every_layer=True,  # All layers connect all vias
+                fullbottom=True,  # Bottom layer takes complete size
+            )
+
+        vias_ref = c << vias
+        vias_ref.move(
+            origin=vias_ref.get_bounding_box()[0],  # bottom left corner
+            destination=(left, bottom),
+        )
 
     return c
